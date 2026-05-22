@@ -29,6 +29,10 @@ export interface SidebarProps {
   brandSlug: string;
   /** Display name shown at the top of the sidebar. */
   brandName: string;
+  /** Where the brand wordmark / logo links — the portal's home. Default
+   *  `/dashboard`. No-workspace portals set their own home, e.g.
+   *  `/creators/dashboard` or a storefront buyer account root. */
+  brandHref?: string;
   /** Brand accent color — used for the active-link pill + workspace
    *  chiclet + profile avatar. Must be a 6-digit hex (`#RRGGBB`): the
    *  soft accent is derived by appending an alpha suffix. Forjio family
@@ -88,6 +92,7 @@ const DEFAULT_DROPDOWN_LINKS: { href: string; label: string; icon: LucideIcon }[
 export function Sidebar({
   brandSlug,
   brandName,
+  brandHref = '/dashboard',
   brandColor,
   brandColorSoft,
   brandIcon,
@@ -170,9 +175,9 @@ export function Sidebar({
           }}
         >
           <Link
-            href="/dashboard"
+            href={brandHref}
             onClick={onClose}
-            aria-label={`${brandName} dashboard`}
+            aria-label={`${brandName} home`}
             style={{
               display: 'flex',
               alignItems: 'center',
