@@ -322,7 +322,16 @@ function NavControl({
           item.onClick?.();
           onNavigate?.();
         }}
-        style={{ ...style, width: '100%', border: 'none', textAlign: 'left', font: 'inherit' }}
+        style={{
+          ...style,
+          width: '100%',
+          border: 'none',
+          textAlign: 'left',
+          // `fontFamily` only — the `font` shorthand would reset the
+          // fontSize/fontWeight that `style` (itemLinkStyle) sets,
+          // making the action item bigger than its sibling links.
+          fontFamily: 'inherit',
+        }}
       >
         {inner}
       </button>
