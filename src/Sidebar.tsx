@@ -28,8 +28,16 @@ export interface SidebarProps {
   /** Display name shown at the top of the sidebar. */
   brandName: string;
   /** Brand accent color — used for the active-link pill + workspace
-   *  chiclet + profile avatar. Forjio family default `#1a1a2e`. */
+   *  chiclet + profile avatar. Must be a 6-digit hex (`#RRGGBB`): the
+   *  soft accent is derived by appending an alpha suffix. Forjio family
+   *  default `#1a1a2e`. */
   brandColor: string;
+  /** Optional pre-formed "soft" accent (active-pill / hover fill).
+   *  Defaults to `brandColor` at 15% alpha. Pass this when `brandColor`
+   *  can't be a static hex — e.g. a theme-following `hsl(var(--primary))`
+   *  value, where the default `${brandColor}26` suffixing would produce
+   *  invalid CSS. */
+  brandColorSoft?: string;
   /** Sidebar logo. Provide a Lucide icon or an `<img>` — anything that
    *  renders next to the brand name. */
   brandIcon?: React.ReactNode;
@@ -74,6 +82,7 @@ export function Sidebar({
   brandSlug,
   brandName,
   brandColor,
+  brandColorSoft,
   brandIcon,
   workspacePersist,
   apiSwitchPath,
@@ -96,7 +105,7 @@ export function Sidebar({
   // surface.
   const themeVars: React.CSSProperties = {
     ['--brand-color' as string]: brandColor,
-    ['--brand-soft' as string]: `${brandColor}26`, // 15% alpha
+    ['--brand-soft' as string]: brandColorSoft ?? `${brandColor}26`, // 15% alpha (or caller-supplied)
   };
 
   async function switchWorkspace(id: string) {
