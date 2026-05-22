@@ -43,16 +43,21 @@ export interface SidebarProps {
   /** Sidebar logo. Provide a Lucide icon or an `<img>` — anything that
    *  renders next to the brand name. */
   brandIcon?: React.ReactNode;
-  /** Persistence flavor — see WorkspacePersistMode docs. */
-  workspacePersist: WorkspacePersistMode;
+  /** Persistence flavor — see WorkspacePersistMode docs. Required only
+   *  in workspace mode (i.e. when `workspaces` is passed). */
+  workspacePersist?: WorkspacePersistMode;
   /** Only used when workspacePersist='api'. Should contain `{id}` as
    *  a placeholder. Example: `/api/v1/account/workspaces/{id}/switch`. */
   apiSwitchPath?: string;
-  /** Loaded workspace list — fetched by the host product. */
-  workspaces: PortalWorkspace[];
+  /** Loaded workspace list — fetched by the host product. **Omit
+   *  entirely for a no-workspace portal** (a storefront buyer account,
+   *  or ripllo's creator / affiliator dashboards): the workspace
+   *  switcher is then not rendered at all — just brand header → nav →
+   *  profile. */
+  workspaces?: PortalWorkspace[];
   /** Active workspace id — host product reads from
-   *  readActiveWorkspaceId or session state. */
-  activeWorkspaceId: string | null;
+   *  readActiveWorkspaceId or session state. Unused in no-workspace mode. */
+  activeWorkspaceId?: string | null;
   /** Nav sections rendered in order. Most-specific href wins for the
    *  active highlight. */
   sections: NavSection[];
@@ -99,8 +104,12 @@ export function Sidebar({
   dropdownLinks = DEFAULT_DROPDOWN_LINKS,
 }: SidebarProps) {
   const pathname = usePathname() ?? '';
-  const active = workspaces.find((w) => w.id === activeWorkspaceId) ?? null;
-  const others = workspaces.filter((w) => w.id !== activeWorkspaceId);
+  // Workspace mode is opt-in: a host that omits `workspaces` gets a
+  // no-workspace portal — no switcher (buyer / creator / affiliator).
+  const workspaceMode = workspaces !== undefined;
+  const wsList = workspaces ?? [];
+  const active = wsList.find((w) => w.id === activeWorkspaceId) ?? null;
+  const others = wsList.filter((w) => w.id !== activeWorkspaceId);
 
   // Theme variables expressed as CSS custom properties; consumers can
   // override on their own root if needed but the props are the canonical
@@ -111,6 +120,7 @@ export function Sidebar({
   };
 
   async function switchWorkspace(id: string) {
+    if (!workspacePersist) return; // no-workspace mode — switcher not rendered
     await writeActiveWorkspace(workspacePersist, brandSlug, id, apiSwitchPath);
     if (onWorkspaceSwitch) {
       await onWorkspaceSwitch(id);
@@ -193,13 +203,15 @@ export function Sidebar({
           </button>
         </div>
 
-        <WorkspaceSwitcher
-          active={active}
-          others={others}
-          hasAny={workspaces.length > 0}
-          onSwitch={switchWorkspace}
-          onNavigate={onClose}
-        />
+        {workspaceMode && (
+          <WorkspaceSwitcher
+            active={active}
+            others={others}
+            hasAny={wsList.length > 0}
+            onSwitch={switchWorkspace}
+            onNavigate={onClose}
+          />
+        )}
 
         <div style={{ flex: 1, padding: '16px 10px', overflowY: 'auto' }}>
           <NavList pathname={pathname} sections={sections} onNavigate={onClose} />
