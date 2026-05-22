@@ -12,9 +12,38 @@ export interface NavItem {
   icon: LucideIcon;
 }
 
+/**
+ * An optionally-labelled cluster of nav items inside a module. The
+ * `label` renders as a small muted sub-heading; omit it for a flat
+ * (unheaded) run of items.
+ */
+export interface NavGroup {
+  label?: string;
+  items: NavItem[];
+}
+
+/**
+ * A collapsible accordion within a section. Carries its own icon and
+ * label; expanded, it renders either `groups` (sub-headed clusters) or
+ * a flat `items` list. Used by module-based portals like storlaunch
+ * where the merchant nav is organized by feature module.
+ */
+export interface NavModule {
+  label: string;
+  icon: LucideIcon;
+  items?: NavItem[];
+  groups?: NavGroup[];
+}
+
+/**
+ * A nav section. Renders flat `items` and/or collapsible `modules`.
+ * Both are optional and a section may carry either or both —
+ * `items`-only is the backward-compatible two-level form.
+ */
 export interface NavSection {
   label: string;
-  items: NavItem[];
+  items?: NavItem[];
+  modules?: NavModule[];
 }
 
 export interface PortalWorkspace {

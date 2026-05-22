@@ -1,9 +1,17 @@
 import type { NavSection } from './types';
 
 /** Find the longest-prefix-matching href in `sections` for the
- *  current pathname. Used by Sidebar to highlight the active item. */
+ *  current pathname. Used by Sidebar to highlight the active item.
+ *  Walks both flat `items` and any collapsible `modules` (incl. their
+ *  groups), so module-based portals get correct highlighting. */
 export function activeHrefFor(pathname: string, sections: NavSection[]): string | null {
-  const candidates = sections.flatMap((s) => s.items.map((i) => i.href));
+  const candidates = sections.flatMap((s) => [
+    ...(s.items ?? []).map((i) => i.href),
+    ...(s.modules ?? []).flatMap((m) => [
+      ...(m.items ?? []).map((i) => i.href),
+      ...(m.groups ?? []).flatMap((g) => g.items.map((i) => i.href)),
+    ]),
+  ]);
   let best: string | null = null;
   for (const href of candidates) {
     const matches =

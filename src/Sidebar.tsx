@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronUp, X, LogOut, BookOpen, FileText, Shield } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronRight, X, LogOut, BookOpen, FileText, Shield } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type {
   LucideIcon,
+  NavItem,
+  NavModule,
   NavSection,
   PortalWorkspace,
   SessionUser,
@@ -209,6 +211,153 @@ export function Sidebar({
   );
 }
 
+const FG = 'hsl(var(--foreground, 222 47% 11%))';
+const MUTED = 'hsl(var(--muted-foreground, 220 9% 46%))';
+const MUTED_SOFT = 'hsl(var(--muted-foreground, 220 9% 46%) / 0.6)';
+
+/** Style for a top-level nav link (flat item or module toggle). */
+function itemLinkStyle(active: boolean): React.CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    fontSize: 13.5,
+    fontWeight: active ? 600 : 500,
+    color: active ? FG : MUTED,
+    padding: '7px 10px',
+    borderRadius: 8,
+    background: active ? 'var(--brand-soft)' : 'transparent',
+    cursor: 'pointer',
+    textDecoration: 'none',
+  };
+}
+
+/** Style for an indented sub-item inside an expanded module. */
+function subItemLinkStyle(active: boolean): React.CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    fontSize: 13,
+    fontWeight: active ? 600 : 500,
+    color: active ? FG : MUTED,
+    padding: '6px 10px 6px 32px',
+    borderRadius: 8,
+    background: active ? 'var(--brand-soft)' : 'transparent',
+    textDecoration: 'none',
+  };
+}
+
+function NavSubItem({
+  item,
+  activeHref,
+  onNavigate,
+}: {
+  item: NavItem;
+  activeHref: string | null;
+  onNavigate?: () => void;
+}) {
+  const Icon = item.icon as LucideIcon;
+  return (
+    <li>
+      <Link
+        href={item.href}
+        onClick={onNavigate}
+        style={subItemLinkStyle(item.href === activeHref)}
+      >
+        <Icon size={13} strokeWidth={2} />
+        <span style={{ flex: 1 }}>{item.label}</span>
+      </Link>
+    </li>
+  );
+}
+
+/**
+ * A collapsible module accordion: a toggle button (module icon +
+ * label + chevron) over an expandable body of `groups` or flat
+ * `items`. Auto-opens when a descendant href is the active route;
+ * the user can still toggle it shut (or open) afterwards.
+ */
+function NavModuleAccordion({
+  module,
+  activeHref,
+  onNavigate,
+}: {
+  module: NavModule;
+  activeHref: string | null;
+  onNavigate?: () => void;
+}) {
+  const descendantHrefs: string[] = [
+    ...(module.items ?? []).map((i) => i.href),
+    ...(module.groups ?? []).flatMap((g) => g.items.map((i) => i.href)),
+  ];
+  const autoOpen = activeHref !== null && descendantHrefs.includes(activeHref);
+  // `null` = follow auto-open; once the user clicks, the explicit
+  // boolean wins.
+  const [override, setOverride] = useState<boolean | null>(null);
+  const isOpen = override ?? autoOpen;
+
+  const ModIcon = module.icon as LucideIcon;
+  const Chevron = isOpen ? ChevronDown : ChevronRight;
+
+  const subHeadingStyle: React.CSSProperties = {
+    fontSize: 9.5,
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    color: MUTED_SOFT,
+    padding: '8px 10px 4px 32px',
+    fontWeight: 600,
+  };
+
+  return (
+    <li style={{ display: 'block' }}>
+      <button
+        type="button"
+        onClick={() => setOverride(!isOpen)}
+        style={{
+          ...itemLinkStyle(autoOpen),
+          width: '100%',
+          border: 'none',
+          textAlign: 'left',
+        }}
+        aria-expanded={isOpen}
+      >
+        <ModIcon size={15} strokeWidth={2} />
+        <span style={{ flex: 1 }}>{module.label}</span>
+        <Chevron size={14} strokeWidth={2} style={{ color: MUTED }} />
+      </button>
+      {isOpen && (
+        <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 0', display: 'grid', gap: 1 }}>
+          {module.groups
+            ? module.groups.map((group, gi) => (
+                <li key={group.label ?? `__group_${gi}`}>
+                  {group.label && <div style={subHeadingStyle}>{group.label}</div>}
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 1 }}>
+                    {group.items.map((item) => (
+                      <NavSubItem
+                        key={item.href}
+                        item={item}
+                        activeHref={activeHref}
+                        onNavigate={onNavigate}
+                      />
+                    ))}
+                  </ul>
+                </li>
+              ))
+            : (module.items ?? []).map((item) => (
+                <NavSubItem
+                  key={item.href}
+                  item={item}
+                  activeHref={activeHref}
+                  onNavigate={onNavigate}
+                />
+              ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
 function NavList({
   pathname,
   sections,
@@ -221,51 +370,53 @@ function NavList({
   const activeHref = activeHrefFor(pathname, sections);
   return (
     <nav aria-label="Dashboard" style={{ display: 'grid', gap: 16 }}>
-      {sections.map((section) => (
-        <div key={section.label}>
-          <div
-            style={{
-              fontSize: 10.5,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: 'hsl(var(--muted-foreground, 220 9% 46%) / 0.6)',
-              padding: '0 10px 6px',
-              fontWeight: 600,
-            }}
-          >
-            {section.label}
+      {sections.map((section) => {
+        const items = section.items ?? [];
+        const modules = section.modules ?? [];
+        // Skip an empty section so its header doesn't float over nothing.
+        if (items.length === 0 && modules.length === 0) return null;
+        return (
+          <div key={section.label}>
+            <div
+              style={{
+                fontSize: 10.5,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: MUTED_SOFT,
+                padding: '0 10px 6px',
+                fontWeight: 600,
+              }}
+            >
+              {section.label}
+            </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 1 }}>
+              {items.map((item) => {
+                const Icon = item.icon as LucideIcon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onNavigate}
+                      style={itemLinkStyle(item.href === activeHref)}
+                    >
+                      <Icon size={15} strokeWidth={2} />
+                      <span style={{ flex: 1 }}>{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+              {modules.map((module) => (
+                <NavModuleAccordion
+                  key={module.label}
+                  module={module}
+                  activeHref={activeHref}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </ul>
           </div>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 1 }}>
-            {section.items.map((item) => {
-              const isActive = item.href === activeHref;
-              const Icon = item.icon as LucideIcon;
-              const linkStyle: React.CSSProperties = {
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                fontSize: 13.5,
-                fontWeight: isActive ? 600 : 500,
-                color: isActive
-                  ? 'hsl(var(--foreground, 222 47% 11%))'
-                  : 'hsl(var(--muted-foreground, 220 9% 46%))',
-                padding: '7px 10px',
-                borderRadius: 8,
-                background: isActive ? 'var(--brand-soft)' : 'transparent',
-                cursor: 'pointer',
-                textDecoration: 'none',
-              };
-              return (
-                <li key={item.href}>
-                  <Link href={item.href} onClick={onNavigate} style={linkStyle}>
-                    <Icon size={15} strokeWidth={2} />
-                    <span style={{ flex: 1 }}>{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
+        );
+      })}
     </nav>
   );
 }
