@@ -70,6 +70,22 @@ export interface SessionUser {
 }
 
 /**
+ * One entry in the profile dropdown's portal switcher. A Forjio
+ * product that ships several sibling portals (e.g. ripllo's creator /
+ * affiliator / merchant surfaces) passes the full set on every portal;
+ * the one matching the current surface is flagged `current`.
+ */
+export interface PortalLink {
+  /** Human label shown in the switcher, e.g. "Creator". */
+  label: string;
+  /** Where selecting this portal navigates. */
+  href: string;
+  /** Marks the portal the user is currently on — rendered as the
+   *  active (non-clickable) entry. */
+  current?: boolean;
+}
+
+/**
  * How the active workspace is persisted across page reloads.
  *
  * - `cookie`: writes `<brand>_active_workspace` cookie. Recommended.

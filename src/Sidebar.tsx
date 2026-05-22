@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronUp, ChevronDown, ChevronRight, X, LogOut, BookOpen, FileText, Shield } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronRight, Check, X, LogOut, BookOpen, FileText, Shield } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type {
   LucideIcon,
   NavItem,
   NavModule,
   NavSection,
+  PortalLink,
   PortalWorkspace,
   SessionUser,
   WorkspacePersistMode,
@@ -29,6 +30,12 @@ export interface SidebarProps {
   brandSlug: string;
   /** Display name shown at the top of the sidebar. */
   brandName: string;
+  /** Optional portal identifier shown as a small uppercase mono
+   *  subtitle directly below the brand name, e.g. "Creator" /
+   *  "Affiliator" for ripllo's sibling portals. Omit on portals that
+   *  don't need to distinguish themselves (a single-portal product, or
+   *  ripllo's default merchant surface). */
+  brandTag?: string;
   /** Where the brand wordmark / logo links — the portal's home. Default
    *  `/dashboard`. No-workspace portals set their own home, e.g.
    *  `/creators/dashboard` or a storefront buyer account root. */
@@ -81,6 +88,12 @@ export interface SidebarProps {
   /** Optional footer links inside the profile dropdown.
    *  Defaults to Docs / Terms / Privacy. */
   dropdownLinks?: { href: string; label: string; icon: LucideIcon }[];
+  /** Optional sibling portals — when provided and non-empty, the
+   *  profile dropdown renders a "Switch portal" section listing each
+   *  one. The entry flagged `current` is shown as the active portal
+   *  (non-clickable); the rest are links. Omit/empty → no switcher.
+   *  Ripllo passes all three of its portals on every ripllo portal. */
+  portals?: PortalLink[];
 }
 
 const DEFAULT_DROPDOWN_LINKS: { href: string; label: string; icon: LucideIcon }[] = [
@@ -92,6 +105,7 @@ const DEFAULT_DROPDOWN_LINKS: { href: string; label: string; icon: LucideIcon }[
 export function Sidebar({
   brandSlug,
   brandName,
+  brandTag,
   brandHref = '/dashboard',
   brandColor,
   brandColorSoft,
@@ -107,6 +121,7 @@ export function Sidebar({
   open,
   onClose,
   dropdownLinks = DEFAULT_DROPDOWN_LINKS,
+  portals,
 }: SidebarProps) {
   const pathname = usePathname() ?? '';
   // Workspace mode is opt-in: a host that omits `workspaces` gets a
@@ -182,15 +197,38 @@ export function Sidebar({
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              fontSize: 18,
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
               textDecoration: 'none',
               color: 'inherit',
             }}
           >
             {brandIcon}
-            {brandName}
+            <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <span
+                style={{
+                  fontSize: 18,
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                }}
+              >
+                {brandName}
+              </span>
+              {brandTag && (
+                <span
+                  style={{
+                    marginTop: 2,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: MUTED_SOFT,
+                    fontFamily: MONO_FONT,
+                  }}
+                >
+                  {brandTag}
+                </span>
+              )}
+            </span>
           </Link>
           <button
             onClick={onClose}
@@ -222,7 +260,13 @@ export function Sidebar({
           <NavList pathname={pathname} sections={sections} onNavigate={onClose} />
         </div>
 
-        <ProfileDropdown user={user} onLogout={onLogout} onNavigate={onClose} dropdownLinks={dropdownLinks} />
+        <ProfileDropdown
+          user={user}
+          onLogout={onLogout}
+          onNavigate={onClose}
+          dropdownLinks={dropdownLinks}
+          portals={portals}
+        />
       </aside>
     </>
   );
@@ -231,6 +275,10 @@ export function Sidebar({
 const FG = 'hsl(var(--foreground, 222 47% 11%))';
 const MUTED = 'hsl(var(--muted-foreground, 220 9% 46%))';
 const MUTED_SOFT = 'hsl(var(--muted-foreground, 220 9% 46%) / 0.6)';
+/** Monospace stack for label-style chrome (section headings, the
+ *  brand tag). Pinned so it renders mono on every host regardless of
+ *  the host page's inherited font. */
+const MONO_FONT = 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace)';
 
 /** Style for a top-level nav link (flat item or module toggle). */
 function itemLinkStyle(active: boolean): React.CSSProperties {
@@ -402,6 +450,7 @@ function NavModuleAccordion({
     color: MUTED_SOFT,
     padding: '8px 10px 4px 32px',
     fontWeight: 600,
+    fontFamily: MONO_FONT,
   };
 
   return (
@@ -480,6 +529,7 @@ function NavList({
                 color: MUTED_SOFT,
                 padding: '0 10px 6px',
                 fontWeight: 600,
+                fontFamily: MONO_FONT,
               }}
             >
               {section.label}
@@ -749,11 +799,13 @@ function ProfileDropdown({
   onLogout,
   onNavigate,
   dropdownLinks,
+  portals,
 }: {
   user: SessionUser | null;
   onLogout: () => void | Promise<void>;
   onNavigate?: () => void;
   dropdownLinks: { href: string; label: string; icon: LucideIcon }[];
+  portals?: PortalLink[];
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -823,6 +875,63 @@ function ProfileDropdown({
               {email}
             </div>
           </div>
+          {portals && portals.length > 0 && (
+            <>
+              <div
+                style={{
+                  fontSize: 9.5,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: MUTED_SOFT,
+                  fontWeight: 600,
+                  fontFamily: MONO_FONT,
+                  padding: '8px 12px 2px',
+                }}
+              >
+                Switch portal
+              </div>
+              {portals.map((portal) =>
+                portal.current ? (
+                  <div
+                    key={portal.href}
+                    aria-current="page"
+                    style={{
+                      ...itemStyle,
+                      color: 'var(--brand-color)',
+                      fontWeight: 600,
+                      cursor: 'default',
+                    }}
+                  >
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 14,
+                        display: 'inline-flex',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Check size={14} />
+                    </span>
+                    {portal.label}
+                  </div>
+                ) : (
+                  <Link
+                    key={portal.href}
+                    href={portal.href}
+                    onClick={() => {
+                      setOpen(false);
+                      onNavigate?.();
+                    }}
+                    style={itemStyle}
+                  >
+                    <span aria-hidden style={{ width: 14 }} />
+                    {portal.label}
+                  </Link>
+                ),
+              )}
+              <div style={{ borderTop: '1px solid hsl(var(--border, 220 14% 90%))', margin: '4px 0' }} />
+            </>
+          )}
           {dropdownLinks.map((link) => {
             const Icon = link.icon;
             return (

@@ -5,6 +5,7 @@ export type {
   NavGroup,
   NavModule,
   NavSection,
+  PortalLink,
   PortalWorkspace,
   SessionUser,
   WorkspacePersistMode,
