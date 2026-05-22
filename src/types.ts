@@ -7,9 +7,15 @@ export type LucideIcon = ComponentType<{
 }>;
 
 export interface NavItem {
-  href: string;
+  /** Link target. Omit for an action item — provide `onClick` instead. */
+  href?: string;
+  /** Action handler. When set, the item renders as a button (e.g. a
+   *  cart-drawer trigger) rather than a link. */
+  onClick?: () => void;
   label: string;
   icon: LucideIcon;
+  /** Optional trailing count/indicator pill (e.g. a cart count). */
+  badge?: number | string;
 }
 
 /**

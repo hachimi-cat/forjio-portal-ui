@@ -265,6 +265,76 @@ function subItemLinkStyle(active: boolean): React.CSSProperties {
   };
 }
 
+/** Trailing count/indicator pill (e.g. a cart count). */
+function NavBadge({ value }: { value: number | string }) {
+  return (
+    <span
+      style={{
+        minWidth: 18,
+        height: 18,
+        padding: '0 5px',
+        borderRadius: 9,
+        background: 'var(--brand-color)',
+        color: '#fff',
+        fontSize: 10.5,
+        fontWeight: 700,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: '0 0 auto',
+      }}
+    >
+      {value}
+    </span>
+  );
+}
+
+/** Renders a nav entry as a link, or — when the item carries an
+ *  `onClick` — as a button (e.g. a cart-drawer trigger). Optional
+ *  trailing `badge` pill. Shared by top-level items and module
+ *  sub-items so both honour action items + badges. */
+function NavControl({
+  item,
+  active,
+  style,
+  iconSize,
+  onNavigate,
+}: {
+  item: NavItem;
+  active: boolean;
+  style: React.CSSProperties;
+  iconSize: number;
+  onNavigate?: () => void;
+}) {
+  const Icon = item.icon as LucideIcon;
+  const inner = (
+    <>
+      <Icon size={iconSize} strokeWidth={2} />
+      <span style={{ flex: 1 }}>{item.label}</span>
+      {item.badge != null && item.badge !== '' && <NavBadge value={item.badge} />}
+    </>
+  );
+  if (item.onClick) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          item.onClick?.();
+          onNavigate?.();
+        }}
+        style={{ ...style, width: '100%', border: 'none', textAlign: 'left', font: 'inherit' }}
+      >
+        {inner}
+      </button>
+    );
+  }
+  return (
+    <Link href={item.href ?? '#'} onClick={onNavigate} style={style}>
+      {inner}
+    </Link>
+  );
+}
+
 function NavSubItem({
   item,
   activeHref,
@@ -274,17 +344,16 @@ function NavSubItem({
   activeHref: string | null;
   onNavigate?: () => void;
 }) {
-  const Icon = item.icon as LucideIcon;
+  const active = !!item.href && item.href === activeHref;
   return (
     <li>
-      <Link
-        href={item.href}
-        onClick={onNavigate}
-        style={subItemLinkStyle(item.href === activeHref)}
-      >
-        <Icon size={13} strokeWidth={2} />
-        <span style={{ flex: 1 }}>{item.label}</span>
-      </Link>
+      <NavControl
+        item={item}
+        active={active}
+        style={subItemLinkStyle(active)}
+        iconSize={13}
+        onNavigate={onNavigate}
+      />
     </li>
   );
 }
@@ -307,7 +376,7 @@ function NavModuleAccordion({
   const descendantHrefs: string[] = [
     ...(module.items ?? []).map((i) => i.href),
     ...(module.groups ?? []).flatMap((g) => g.items.map((i) => i.href)),
-  ];
+  ].filter((h): h is string => typeof h === 'string');
   const autoOpen = activeHref !== null && descendantHrefs.includes(activeHref);
   // `null` = follow auto-open; once the user clicks, the explicit
   // boolean wins.
@@ -408,17 +477,16 @@ function NavList({
             </div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 1 }}>
               {items.map((item) => {
-                const Icon = item.icon as LucideIcon;
+                const active = !!item.href && item.href === activeHref;
                 return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={onNavigate}
-                      style={itemLinkStyle(item.href === activeHref)}
-                    >
-                      <Icon size={15} strokeWidth={2} />
-                      <span style={{ flex: 1 }}>{item.label}</span>
-                    </Link>
+                  <li key={item.href ?? item.label}>
+                    <NavControl
+                      item={item}
+                      active={active}
+                      style={itemLinkStyle(active)}
+                      iconSize={15}
+                      onNavigate={onNavigate}
+                    />
                   </li>
                 );
               })}

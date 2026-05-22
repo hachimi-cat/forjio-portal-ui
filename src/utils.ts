@@ -5,13 +5,16 @@ import type { NavSection } from './types';
  *  Walks both flat `items` and any collapsible `modules` (incl. their
  *  groups), so module-based portals get correct highlighting. */
 export function activeHrefFor(pathname: string, sections: NavSection[]): string | null {
-  const candidates = sections.flatMap((s) => [
-    ...(s.items ?? []).map((i) => i.href),
-    ...(s.modules ?? []).flatMap((m) => [
-      ...(m.items ?? []).map((i) => i.href),
-      ...(m.groups ?? []).flatMap((g) => g.items.map((i) => i.href)),
-    ]),
-  ]);
+  const candidates = sections
+    .flatMap((s) => [
+      ...(s.items ?? []).map((i) => i.href),
+      ...(s.modules ?? []).flatMap((m) => [
+        ...(m.items ?? []).map((i) => i.href),
+        ...(m.groups ?? []).flatMap((g) => g.items.map((i) => i.href)),
+      ]),
+    ])
+    // action items carry no href — drop them before prefix-matching
+    .filter((h): h is string => typeof h === 'string');
   let best: string | null = null;
   for (const href of candidates) {
     const matches =
