@@ -934,10 +934,15 @@ function ProfileDropdown({
           )}
           {dropdownLinks.map((link) => {
             const Icon = link.icon;
+            // External (absolute http) links open in a new tab so the user
+            // doesn't lose the portal — e.g. a hosted support/help center.
+            const external = /^https?:\/\//.test(link.href);
             return (
               <Link
                 key={link.href}
                 href={link.href}
+                target={external ? '_blank' : undefined}
+                rel={external ? 'noopener noreferrer' : undefined}
                 onClick={() => {
                   setOpen(false);
                   onNavigate?.();
