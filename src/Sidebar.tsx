@@ -94,6 +94,13 @@ export interface SidebarProps {
    *  (non-clickable); the rest are links. Omit/empty → no switcher.
    *  Ripllo passes all three of its portals on every ripllo portal. */
   portals?: PortalLink[];
+  /** Optional product-specific chrome rendered directly **below the
+   *  workspace switcher** (top of the nav panel). The Sidebar imposes no
+   *  styling on it — the consumer owns padding/border so it can match its
+   *  own token system. Used e.g. by Plugipay for its account Test/Live
+   *  mode switch. In no-workspace portals (no switcher) it sits just under
+   *  the brand row. */
+  belowWorkspaces?: React.ReactNode;
 }
 
 const DEFAULT_DROPDOWN_LINKS: { href: string; label: string; icon: LucideIcon }[] = [
@@ -122,6 +129,7 @@ export function Sidebar({
   onClose,
   dropdownLinks = DEFAULT_DROPDOWN_LINKS,
   portals,
+  belowWorkspaces,
 }: SidebarProps) {
   const pathname = usePathname() ?? '';
   // Workspace mode is opt-in: a host that omits `workspaces` gets a
@@ -255,6 +263,8 @@ export function Sidebar({
             onNavigate={onClose}
           />
         )}
+
+        {belowWorkspaces}
 
         <div style={{ flex: 1, padding: '16px 10px', overflowY: 'auto' }}>
           <NavList pathname={pathname} sections={sections} onNavigate={onClose} />
