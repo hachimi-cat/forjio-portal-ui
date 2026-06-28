@@ -924,6 +924,22 @@ function ProfileDropdown({
                     </span>
                     {portal.label}
                   </div>
+                ) : portal.external ? (
+                  // Backend route (e.g. SSO start) — render a plain anchor so
+                  // the browser does a full-page navigation. A next/link
+                  // client transition would 404 on a non-page path.
+                  <a
+                    key={portal.href}
+                    href={portal.href}
+                    onClick={() => {
+                      setOpen(false);
+                      onNavigate?.();
+                    }}
+                    style={itemStyle}
+                  >
+                    <span aria-hidden style={{ width: 14 }} />
+                    {portal.label}
+                  </a>
                 ) : (
                   <Link
                     key={portal.href}

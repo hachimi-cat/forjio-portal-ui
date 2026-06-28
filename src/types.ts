@@ -83,6 +83,11 @@ export interface PortalLink {
   /** Marks the portal the user is currently on — rendered as the
    *  active (non-clickable) entry. */
   current?: boolean;
+  /** Render as a plain anchor (full-page navigation) instead of a
+   *  client-side `next/link`. Use when `href` points at a backend route
+   *  (e.g. an SSO start endpoint) that the Next router can't resolve —
+   *  a client transition would 404 instead of hitting the server. */
+  external?: boolean;
 }
 
 /**
