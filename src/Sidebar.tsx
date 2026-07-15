@@ -656,7 +656,7 @@ function WorkspaceSwitcher({
         borderBottom: '1px solid hsl(var(--border, 220 14% 90%))',
       }}
     >
-      {open && others.length > 0 && (
+      {open && (
         <div
           style={{
             position: 'absolute',
@@ -670,8 +670,60 @@ function WorkspaceSwitcher({
             boxShadow: '0 10px 30px -12px rgba(0, 0, 0, 0.5)',
             padding: 4,
             zIndex: 20,
+            // Cap height + scroll so a workspace-heavy account (many
+            // memberships) doesn't overflow the viewport.
+            maxHeight: 'min(60vh, 360px)',
+            overflowY: 'auto',
           }}
         >
+          {/* Active workspace row — always shown so a single-workspace
+              account still gets a real, non-empty dropdown (the whole
+              switcher was previously gated on others.length > 0, leaving
+              single-workspace users with a dead button). */}
+          {active && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 6,
+                background: 'hsl(var(--accent, 220 14% 96%))',
+              }}
+            >
+              <WorkspaceChiclet name={active.name} />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {active.name}
+                  </span>
+                  {active.isForjioInternal && <ForjioBadge />}
+                </span>
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: 11.5,
+                    color: 'hsl(var(--muted-foreground, 220 9% 46%))',
+                  }}
+                >
+                  {titleCase(active.role)} · current
+                </span>
+              </span>
+              <Check size={15} strokeWidth={2.5} />
+            </div>
+          )}
+          {others.length > 0 && (
+            <div style={{ borderTop: '1px solid hsl(var(--border, 220 14% 90%))', margin: '4px 0' }} />
+          )}
           {others.map((w) => (
             <button
               key={w.id}
