@@ -366,17 +366,6 @@ function CreditsChip({
           <span style={{ fontSize: 12.5, minWidth: 0 }}>
             <span style={{ fontWeight: 700 }}>{balance.toLocaleString()}</span>{' '}
             credits
-            {credits.caption ? (
-              <span
-                style={{
-                  display: 'block',
-                  fontSize: 10.5,
-                  color: MUTED,
-                }}
-              >
-                {credits.caption}
-              </span>
-            ) : null}
           </span>
           {state !== 'ok' ? (
             <span
@@ -389,6 +378,21 @@ function CreditsChip({
               }}
             >
               Top up
+            </span>
+          ) : credits.usedFraction != null ? (
+            // Claude-meter convention (bang 2026-08-05): the used share
+            // stands alone at the row's right, derived from the same
+            // fraction the bar fills with — the two can never disagree.
+            <span
+              style={{
+                marginLeft: 'auto',
+                fontSize: 10.5,
+                color: MUTED,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {Math.min(100, Math.max(0, Math.round(credits.usedFraction * 100)))}
+              % used
             </span>
           ) : null}
         </div>
@@ -415,6 +419,13 @@ function CreditsChip({
             }}
           />
         </div>
+        {credits.caption ? (
+          // The reset line sits under the bar ("Resets Sep 1, 7:00 AM"),
+          // not glued to the number — mirrors the reference meter.
+          <div style={{ fontSize: 10.5, color: MUTED, marginTop: 5 }}>
+            {credits.caption}
+          </div>
+        ) : null}
       </Link>
     </div>
   );
