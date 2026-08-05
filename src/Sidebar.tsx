@@ -318,9 +318,17 @@ function CreditsChip({
         : 'hsl(0 84% 60%)';
   const denominator = Math.max(credits.grantCredits ?? Math.max(balance, 1), 1);
   const fraction = Math.min(1, Math.max(0, balance / denominator));
-  // A drained-but-positive balance still shows a sliver — a bar that
-  // reads as empty while credits remain is a support ticket.
-  const widthPct = balance > 0 ? Math.max(4, Math.round(fraction * 100)) : 0;
+  // usedFraction flips the bar to the quota convention: filled = share
+  // of the plan limit consumed, matching an "x% used" caption. Legacy
+  // fill (balance/denominator) remains for hosts that don't pass it —
+  // there, a drained-but-positive balance still shows a sliver, because
+  // a bar that reads as empty while credits remain is a support ticket.
+  const widthPct =
+    credits.usedFraction != null
+      ? Math.min(100, Math.max(0, Math.round(credits.usedFraction * 100)))
+      : balance > 0
+        ? Math.max(4, Math.round(fraction * 100))
+        : 0;
 
   return (
     <div style={{ padding: '0 10px 8px' }}>

@@ -84,6 +84,13 @@ export interface AgentCredits {
   /** The meter bar's denominator — monthly grant plus any top-ups.
    *  Omitted → the bar renders full whenever credits are positive. */
   grantCredits?: number;
+  /** When set (0..1), the bar renders this fraction FILLED — the quota
+   *  convention (filled = consumed share of the plan limit), agreeing
+   *  with an "x% used" caption. A seeded/topped-up wallet whose balance
+   *  dwarfs the plan limit would otherwise show a full bar next to
+   *  "100% used" (bang 2026-08-05). Omitted → legacy
+   *  balance/denominator fill. */
+  usedFraction?: number;
   /** Caption under the number, e.g. "grant renews Sep 1". */
   caption?: string;
   /** Amber below this many credits (default 50). Red at zero. */
