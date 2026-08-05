@@ -1,6 +1,7 @@
 export { Sidebar } from './Sidebar';
 export type { SidebarProps } from './Sidebar';
 export type {
+  AgentCredits,
   NavItem,
   NavGroup,
   NavModule,

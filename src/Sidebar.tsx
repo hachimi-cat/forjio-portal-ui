@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ChevronUp, ChevronDown, ChevronRight, Check, X, LogOut, BookOpen, FileText, Shield } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type {
+  AgentCredits,
   LucideIcon,
   NavItem,
   NavModule,
@@ -94,6 +95,11 @@ export interface SidebarProps {
    *  (non-clickable); the rest are links. Omit/empty → no switcher.
    *  Ripllo passes all three of its portals on every ripllo portal. */
   portals?: PortalLink[];
+  /** Embedded-agent credit balance chip, rendered directly above the
+   *  profile row with a meter bar. Omit/null (the default) renders
+   *  nothing — products pass this only when the agent-layer flag is on
+   *  for the signed-in user, so a flag-off sidebar is unchanged. */
+  credits?: AgentCredits | null;
   /** Optional product-specific chrome rendered directly **below the
    *  workspace switcher** (top of the nav panel). The Sidebar imposes no
    *  styling on it — the consumer owns padding/border so it can match its
@@ -129,6 +135,7 @@ export function Sidebar({
   onClose,
   dropdownLinks = DEFAULT_DROPDOWN_LINKS,
   portals,
+  credits,
   belowWorkspaces,
 }: SidebarProps) {
   const pathname = usePathname() ?? '';
@@ -270,6 +277,8 @@ export function Sidebar({
           <NavList pathname={pathname} sections={sections} onNavigate={onClose} />
         </div>
 
+        {credits ? <CreditsChip credits={credits} onNavigate={onClose} /> : null}
+
         <ProfileDropdown
           user={user}
           onLogout={onLogout}
@@ -279,6 +288,127 @@ export function Sidebar({
         />
       </aside>
     </>
+  );
+}
+
+/**
+ * Agent-credit balance chip — number + caption + meter bar, directly
+ * above the profile row. One Forjio-wide balance, so this chip shows
+ * the same number in every product. Three states by balance: normal
+ * (brand-colored meter), low (amber, Top up CTA), empty/negative (red,
+ * Top up CTA). The whole chip links to the product's Billing → Credits
+ * section.
+ */
+function CreditsChip({
+  credits,
+  onNavigate,
+}: {
+  credits: AgentCredits;
+  onNavigate?: () => void;
+}) {
+  const balance = credits.credits;
+  const lowAt = credits.lowThreshold ?? 50;
+  const state: 'ok' | 'low' | 'out' =
+    balance <= 0 ? 'out' : balance <= lowAt ? 'low' : 'ok';
+  const meterColor =
+    state === 'ok'
+      ? 'var(--brand-color, hsl(217 91% 60%))'
+      : state === 'low'
+        ? 'hsl(38 92% 50%)'
+        : 'hsl(0 84% 60%)';
+  const denominator = Math.max(credits.grantCredits ?? Math.max(balance, 1), 1);
+  const fraction = Math.min(1, Math.max(0, balance / denominator));
+  // A drained-but-positive balance still shows a sliver — a bar that
+  // reads as empty while credits remain is a support ticket.
+  const widthPct = balance > 0 ? Math.max(4, Math.round(fraction * 100)) : 0;
+
+  return (
+    <div style={{ padding: '0 10px 8px' }}>
+      <Link
+        href={credits.href}
+        onClick={onNavigate}
+        aria-label={`Agent credits: ${balance.toLocaleString()}`}
+        style={{
+          display: 'block',
+          border: `1px solid ${
+            state === 'ok'
+              ? 'hsl(var(--border, 220 14% 90%))'
+              : state === 'low'
+                ? 'hsl(38 92% 50% / 0.55)'
+                : 'hsl(0 84% 60% / 0.55)'
+          }`,
+          background: 'hsl(var(--muted, 220 14% 96%) / 0.5)',
+          borderRadius: 10,
+          padding: '8px 10px 9px',
+          textDecoration: 'none',
+          color: FG,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span
+            aria-hidden
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 99,
+              flex: 'none',
+              background: meterColor,
+            }}
+          />
+          <span style={{ fontSize: 12.5, minWidth: 0 }}>
+            <span style={{ fontWeight: 700 }}>{balance.toLocaleString()}</span>{' '}
+            credits
+            {credits.caption ? (
+              <span
+                style={{
+                  display: 'block',
+                  fontSize: 10.5,
+                  color: MUTED,
+                }}
+              >
+                {credits.caption}
+              </span>
+            ) : null}
+          </span>
+          {state !== 'ok' ? (
+            <span
+              style={{
+                marginLeft: 'auto',
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: meterColor,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Top up
+            </span>
+          ) : null}
+        </div>
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={denominator}
+          aria-valuenow={Math.max(0, balance)}
+          style={{
+            height: 4,
+            borderRadius: 99,
+            background: 'hsl(var(--border, 220 14% 90%))',
+            marginTop: 7,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              width: `${widthPct}%`,
+              height: '100%',
+              borderRadius: 99,
+              background: meterColor,
+              transition: 'width 0.35s',
+            }}
+          />
+        </div>
+      </Link>
+    </div>
   );
 }
 

@@ -70,6 +70,30 @@ export interface SessionUser {
 }
 
 /**
+ * The embedded agent layer's credit balance, rendered as a chip with a
+ * meter bar directly above the profile row. One Forjio-wide balance —
+ * the same number in every product's sidebar. Pass `null`/`undefined`
+ * (the default) to render nothing at all: products only pass this when
+ * `catentio.pilot_integration` is on for the signed-in user, so a
+ * flag-off sidebar is byte-identical to today's.
+ */
+export interface AgentCredits {
+  /** Current balance in credits. May be negative — usage bills in
+   *  arrears and the wallet bleeds below zero by design. */
+  credits: number;
+  /** The meter bar's denominator — monthly grant plus any top-ups.
+   *  Omitted → the bar renders full whenever credits are positive. */
+  grantCredits?: number;
+  /** Caption under the number, e.g. "grant renews Sep 1". */
+  caption?: string;
+  /** Amber below this many credits (default 50). Red at zero. */
+  lowThreshold?: number;
+  /** Where the chip (and the low/empty Top up CTA) navigates —
+   *  the product's Billing → Credits section. */
+  href: string;
+}
+
+/**
  * One entry in the profile dropdown's portal switcher. A Forjio
  * product that ships several sibling portals (e.g. ripllo's creator /
  * affiliator / merchant surfaces) passes the full set on every portal;
