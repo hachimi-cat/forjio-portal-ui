@@ -157,6 +157,12 @@ export function MobileHeader({
         style={{
           ...ISLAND,
           pointerEvents: 'auto',
+          // Pinned right even when the left island renders nothing —
+          // justify-between alone would slide the burger to the left
+          // edge whenever the workspace list is empty: permanently for
+          // a no-workspace console (catentio admin), and for one frame
+          // in every product while /workspaces is still in flight.
+          marginLeft: 'auto',
           width: 44,
           height: 44,
           flex: '0 0 44px',
