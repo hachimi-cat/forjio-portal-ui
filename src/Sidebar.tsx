@@ -180,6 +180,11 @@ export function Sidebar({
         />
       )}
 
+      {/* h-dvh, not h-screen: 100vh is iOS Safari's LARGE viewport, so a
+          100vh drawer runs under the collapsed toolbar and the profile row
+          at its bottom can never be scrolled into view. dvh tracks the
+          toolbar's actual state in both the fixed drawer and the
+          lg:sticky column. */}
       <aside
         style={{
           ...themeVars,
@@ -190,7 +195,7 @@ export function Sidebar({
           display: 'flex',
           flexDirection: 'column',
         }}
-        className={`fixed inset-y-0 left-0 z-50 h-screen transition-transform lg:sticky lg:top-0 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 h-dvh transition-transform lg:sticky lg:top-0 lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
