@@ -363,7 +363,7 @@ function CreditsChip({
               background: meterColor,
             }}
           />
-          <span style={{ fontSize: 12.5, minWidth: 0 }}>
+          <span style={{ fontSize: 14, minWidth: 0 }}>
             <span style={{ fontWeight: 700 }}>{balance.toLocaleString()}</span>{' '}
             credits
           </span>
@@ -371,7 +371,7 @@ function CreditsChip({
             <span
               style={{
                 marginLeft: 'auto',
-                fontSize: 10.5,
+                fontSize: 12,
                 fontWeight: 700,
                 color: meterColor,
                 whiteSpace: 'nowrap',
@@ -386,9 +386,10 @@ function CreditsChip({
             <span
               style={{
                 marginLeft: 'auto',
-                fontSize: 10.5,
+                fontSize: 12,
                 color: MUTED,
                 whiteSpace: 'nowrap',
+                fontFamily: MONO_FONT,
               }}
             >
               {Math.min(100, Math.max(0, Math.round(credits.usedFraction * 100)))}
@@ -422,7 +423,14 @@ function CreditsChip({
         {credits.caption ? (
           // The reset line sits under the bar ("Resets Sep 1, 7:00 AM"),
           // not glued to the number — mirrors the reference meter.
-          <div style={{ fontSize: 10.5, color: MUTED, marginTop: 5 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: MUTED,
+              marginTop: 5,
+              fontFamily: MONO_FONT,
+            }}
+          >
             {credits.caption}
           </div>
         ) : null}
