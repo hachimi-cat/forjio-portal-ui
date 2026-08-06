@@ -16,6 +16,7 @@ import type {
   WorkspacePersistMode,
 } from './types';
 import { activeHrefFor, titleCase, writeActiveWorkspace } from './utils';
+import { WorkspaceChiclet, ForjioBadge, WorkspaceMenuPanel } from './workspace-bits';
 
 /**
  * Forjio family sidebar — workspace switcher on top, nav sections in
@@ -185,18 +186,23 @@ export function Sidebar({
           at its bottom can never be scrolled into view. dvh tracks the
           toolbar's actual state in both the fixed drawer and the
           lg:sticky column. */}
+      {/* Phone drawer slides in from the RIGHT (paired with the
+          MobileHeader island's burger on that side — bang 2026-08-06);
+          on lg it's the ordinary left sticky column, so the border
+          side flips with the breakpoint via the classes below while
+          the color stays inline. */}
       <aside
         style={{
           ...themeVars,
-          borderRight: '1px solid hsl(var(--border, 220 14% 90%))',
+          borderColor: 'hsl(var(--border, 220 14% 90%))',
           background: 'hsl(var(--card, 0 0% 100%))',
           color: 'hsl(var(--foreground, 222 47% 11%))',
           width: 248,
           display: 'flex',
           flexDirection: 'column',
         }}
-        className={`fixed inset-y-0 left-0 z-50 h-dvh transition-transform lg:sticky lg:top-0 lg:translate-x-0 ${
-          open ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 right-0 z-50 h-dvh border-l transition-transform lg:sticky lg:top-0 lg:translate-x-0 lg:border-l-0 lg:border-r ${
+          open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Brand row */}
@@ -266,14 +272,19 @@ export function Sidebar({
           </button>
         </div>
 
+        {/* Hidden on phones: the MobileHeader island pill is the
+            switcher there, so repeating it in the drawer would be two
+            competing switchers one tap apart. */}
         {workspaceMode && (
-          <WorkspaceSwitcher
-            active={active}
-            others={others}
-            hasAny={wsList.length > 0}
-            onSwitch={switchWorkspace}
-            onNavigate={onClose}
-          />
+          <div className="hidden lg:block">
+            <WorkspaceSwitcher
+              active={active}
+              others={others}
+              hasAny={wsList.length > 0}
+              onSwitch={switchWorkspace}
+              onNavigate={onClose}
+            />
+          </div>
         )}
 
         {belowWorkspaces}
@@ -737,51 +748,8 @@ function NavList({
   );
 }
 
-function WorkspaceChiclet({ name }: { name: string }) {
-  return (
-    <span
-      aria-hidden
-      style={{
-        width: 28,
-        height: 28,
-        flex: '0 0 28px',
-        borderRadius: 8,
-        background: 'var(--brand-soft)',
-        color: 'var(--brand-color)',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 13,
-        fontWeight: 700,
-        textTransform: 'uppercase',
-        border: '1px solid var(--brand-soft)',
-      }}
-    >
-      {name.slice(0, 1)}
-    </span>
-  );
-}
-
-function ForjioBadge() {
-  return (
-    <span
-      title="Forjio-operated workspace"
-      style={{
-        fontSize: 10,
-        textTransform: 'uppercase',
-        letterSpacing: '0.06em',
-        color: 'var(--brand-color)',
-        background: 'var(--brand-soft)',
-        border: '1px solid var(--brand-soft)',
-        padding: '1px 6px',
-        borderRadius: 4,
-        flex: '0 0 auto',
-      }}
-    >
-      forjio
-    </span>
-  );
-}
+// WorkspaceChiclet + ForjioBadge + the dropdown panel now live in
+// workspace-bits.tsx, shared with MobileHeader's island pill.
 
 function WorkspaceSwitcher({
   active,
@@ -819,144 +787,25 @@ function WorkspaceSwitcher({
       }}
     >
       {open && (
-        <div
+        <WorkspaceMenuPanel
+          active={active}
+          others={others}
+          onPick={(id) => {
+            setOpen(false);
+            onSwitch(id);
+          }}
+          onManage={() => {
+            setOpen(false);
+            onNavigate?.();
+          }}
           style={{
             position: 'absolute',
             top: '100%',
             left: 10,
             right: 10,
             marginTop: 6,
-            borderRadius: 10,
-            border: '1px solid hsl(var(--border, 220 14% 90%))',
-            background: 'hsl(var(--card, 0 0% 100%))',
-            boxShadow: '0 10px 30px -12px rgba(0, 0, 0, 0.5)',
-            padding: 4,
-            zIndex: 20,
-            // Cap height + scroll so a workspace-heavy account (many
-            // memberships) doesn't overflow the viewport.
-            maxHeight: 'min(60vh, 360px)',
-            overflowY: 'auto',
           }}
-        >
-          {/* Active workspace row — always shown so a single-workspace
-              account still gets a real, non-empty dropdown (the whole
-              switcher was previously gated on others.length > 0, leaving
-              single-workspace users with a dead button). */}
-          {active && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                width: '100%',
-                padding: '8px 10px',
-                borderRadius: 6,
-                background: 'hsl(var(--accent, 220 14% 96%))',
-              }}
-            >
-              <WorkspaceChiclet name={active.name} />
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {active.name}
-                  </span>
-                  {active.isForjioInternal && <ForjioBadge />}
-                </span>
-                <span
-                  style={{
-                    display: 'block',
-                    fontSize: 11.5,
-                    color: 'hsl(var(--muted-foreground, 220 9% 46%))',
-                  }}
-                >
-                  {titleCase(active.role)} · current
-                </span>
-              </span>
-              <Check size={15} strokeWidth={2.5} />
-            </div>
-          )}
-          {others.length > 0 && (
-            <div style={{ borderTop: '1px solid hsl(var(--border, 220 14% 90%))', margin: '4px 0' }} />
-          )}
-          {others.map((w) => (
-            <button
-              key={w.id}
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                onSwitch(w.id);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                width: '100%',
-                padding: '8px 10px',
-                border: 'none',
-                background: 'transparent',
-                textAlign: 'left',
-                cursor: 'pointer',
-                borderRadius: 6,
-                color: 'inherit',
-              }}
-            >
-              <WorkspaceChiclet name={w.name} />
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {w.name}
-                  </span>
-                  {w.isForjioInternal && <ForjioBadge />}
-                </span>
-                <span
-                  style={{
-                    display: 'block',
-                    fontSize: 11.5,
-                    color: 'hsl(var(--muted-foreground, 220 9% 46%))',
-                  }}
-                >
-                  {titleCase(w.role)}
-                </span>
-              </span>
-            </button>
-          ))}
-          <div style={{ borderTop: '1px solid hsl(var(--border, 220 14% 90%))', margin: '4px 0' }} />
-          <Link
-            href="/dashboard/workspaces"
-            onClick={() => {
-              setOpen(false);
-              onNavigate?.();
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '8px 10px',
-              fontSize: 13,
-              color: 'hsl(var(--muted-foreground, 220 9% 46%))',
-              textDecoration: 'none',
-              borderRadius: 6,
-            }}
-          >
-            + Manage workspaces
-          </Link>
-        </div>
+        />
       )}
       <button
         type="button"

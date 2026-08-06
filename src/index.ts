@@ -1,5 +1,7 @@
 export { Sidebar } from './Sidebar';
 export type { SidebarProps } from './Sidebar';
+export { MobileHeader } from './MobileHeader';
+export type { MobileHeaderProps } from './MobileHeader';
 export type {
   AgentCredits,
   NavItem,
